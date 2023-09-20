@@ -1,6 +1,8 @@
 #include "datasource.h"
 #include <chrono>
 #include <random>
+#include <iostream>
+#include <QTextStream>
 
 DataSource::DataSource(QObject *parent) :
     QObject(parent)
@@ -31,11 +33,16 @@ void DataSource::update(QSurface3DSeries *series)
             ++p[int(number)];
     }
 
+    QTextStream out(stdout);
     auto now = std::chrono::system_clock::now().time_since_epoch();
     auto time_ = std::chrono::duration<double>(now).count();
-    QSurfaceDataRow row(10);
-    for (int i = 0; i < 10; ++i) {
-        row[i] = QVector3D(time_ - m_now, double(i), p[i] / 10.);
+    for (int j = 0; j < 3; ++j) {
+        QSurfaceDataRow *row = new QSurfaceDataRow(10);
+        for (int i = 0; i < 10; ++i) {
+            out << "x: " << time_ - m_now << ", z: " << double(i) << ", y: " << p[i] / 10. << '\n';
+            (*row)[i] = QVector3D(time_ - m_now, p[i] / 10., double(i));
+        }
+        auto index = series->dataProxy()->addRow(row);
+        out << "row added, index: " << index << '\n';
     }
-    series->dataProxy()->addRow(&row);
 }
